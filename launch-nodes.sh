@@ -1,7 +1,16 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -euo pipefail
 PIDS=""
 
+cleanup() {
+  trap - EXIT ERR INT TERM   # prevent recursion
+  echo "Cleaning up..."
+  virsh net-destroy k8s-net >/dev/null 2>&1 || true
+  pkill -P $$ >/dev/null 2>&1 || true
+}
+trap cleanup EXIT ERR INT TERM
+
+# the IP to MAC address mapping is defined there
 echo 'Starting nodes'
 virsh net-destroy k8s-net || true
 virsh net-create k8s-net.xml
@@ -12,12 +21,10 @@ sleep 3
 rm ./k3s_cluster_key
 rm ./k3s_cluster_key.pub
 ssh-keygen -t ed25519 -f ./k3s_cluster_key -N ''
-PUB_KEY=$(cat ./k3s_cluster_key.pub)
-PRIV_KEY=$(cat ./k3s_cluster_key)
 
-# Compile templates
-yq ".users[0].\"ssh-authorized-keys\"[1] = \"$PUB_KEY\"" ./cloud-init/master/user-data.template > ./cloud-init/master/user-data
-yq ".users[0].\"ssh-authorized-keys\"[1] = \"$PUB_KEY\" | .write_files[0].content = load_str(\"./k3s_cluster_key\")" ./cloud-init/worker/user-data.template > ./cloud-init/worker/user-data
+# Compile the templates
+yq ".users[0].\"ssh-authorized-keys\"[1] = load_str(\"./k3s_cluster_key.pub\")" ./cloud-init/master/user-data.template > ./cloud-init/master/user-data
+yq ".users[0].\"ssh-authorized-keys\"[1] = load_str(\"./k3s_cluster_key.pub\") | .write_files[0].content = load_str(\"./k3s_cluster_key\")" ./cloud-init/worker/user-data.template > ./cloud-init/worker/user-data
 
 cloud-localds seed-master.iso cloud-init/master/user-data cloud-init/master/meta-data
 cloud-localds seed-worker.iso cloud-init/worker/user-data cloud-init/worker/meta-data
@@ -37,7 +44,7 @@ for i in "${!hosts[@]}"; do
     cp ./debian-12-genericcloud-amd64-20250703-2162.qcow2 ./image_$i.qcow2
     
     qemu-system-x86_64 \
-      -m 2G \
+      -m 4G \
       -smp 2 \
       -device virtio-net-pci,netdev=net0,mac=${hosts[$i]} \
       -netdev bridge,id=net0,br=br0 \
@@ -50,11 +57,19 @@ for i in "${!hosts[@]}"; do
     PIDS="$PIDS $!"
 done
 
-wait
+# get k3s.yaml to use with `k9s --kubeconfig k3s.yaml` or `kubectl --kubeconfig k3s.yaml ...`
+while true; do
+  K3S_CONFIG=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./k3s_cluster_key root@10.0.0.10 'cat /etc/rancher/k3s/k3s.yaml 2>/dev/null' || true)
+  if [ -n "$K3S_CONFIG" ]; then
+    echo "Got k3s config"
+    break
+  fi
+  echo "Waiting for k3s config..."
+  sleep 5
+done
 
-cleanup() {
-  echo "Cleaning up..."
-  virsh net-destroy k8s-net || true
-  pkill -P $$ || true
-}
-trap cleanup EXIT
+printf "%s" "$K3S_CONFIG" | sed 's/127\.0\.0\.1/10.0.0.10/g' > k3s.yaml
+
+chmod o+r k3s_cluster_key # in case this script is run as root but we want to use the key
+
+wait

@@ -19,7 +19,7 @@ runcmd:
   - until ping -c1 10.0.0.10; do sleep 2; done
   - |
     while true; do
-      TOKEN=$(ssh -o StrictHostKeyChecking=no -i /root/.ssh/id_ed25519 root@10.0.0.10 'cat /var/lib/rancher/k3s/server/node-token 2>/dev/null' || true)
+      TOKEN=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /root/.ssh/id_ed25519 root@10.0.0.10 'cat /var/lib/rancher/k3s/server/node-token 2>/dev/null' || true)
       if [ -n "$TOKEN" ]; then
         echo "Got token"
         break

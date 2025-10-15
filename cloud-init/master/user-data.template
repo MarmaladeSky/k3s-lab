@@ -1,0 +1,16 @@
+#cloud-config
+hostname: master
+package_update: true
+package_upgrade: true
+
+users:
+  - name: root
+    ssh-authorized-keys:
+      - replace
+disable_root: false
+
+runcmd:
+  - curl -sfL https://get.k3s.io | sh -
+  - systemctl enable k3s
+  - systemctl start k3s
+  - cat /var/lib/rancher/k3s/server/node-token > /root/node-token

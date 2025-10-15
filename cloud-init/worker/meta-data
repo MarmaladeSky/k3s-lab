@@ -1,0 +1,2 @@
+instance-id: k3s-worker
+local-hostname: worker

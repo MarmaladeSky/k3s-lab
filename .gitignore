@@ -1,0 +1,8 @@
+cloud-init/master/user-data
+cloud-init/worker/user-data
+*.qcow2
+*.iso
+k3s.yaml
+k3s_cluster_key
+k3s_cluster_key.pub
+

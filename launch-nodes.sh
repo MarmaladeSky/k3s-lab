@@ -18,8 +18,8 @@ virsh net-create k8s-net.xml
 sleep 3
 
 # Init throw away key
-rm ./k3s_cluster_key
-rm ./k3s_cluster_key.pub
+rm ./k3s_cluster_key || true
+rm ./k3s_cluster_key.pub || true
 ssh-keygen -t ed25519 -f ./k3s_cluster_key -N ''
 
 # Compile the templates
@@ -28,6 +28,11 @@ yq ".users[0].\"ssh-authorized-keys\"[1] = load_str(\"./k3s_cluster_key.pub\") |
 
 cloud-localds seed-master.iso cloud-init/master/user-data cloud-init/master/meta-data
 cloud-localds seed-worker.iso cloud-init/worker/user-data cloud-init/worker/meta-data
+
+# fetch image
+if [ ! -f "debian-12-genericcloud-amd64-20250703-2162.qcow2" ]; then
+  wget https://cloud.debian.org/images/cloud/bookworm/20250703-2162/debian-12-genericcloud-amd64-20250703-2162.qcow2
+fi
 
 hosts=("7c:92:6e:84:1f:50" "7c:92:6e:84:1f:51" "7c:92:6e:84:1f:52" "7c:92:6e:84:1f:53")
 for i in "${!hosts[@]}"; do
@@ -64,7 +69,7 @@ while true; do
     echo "Got k3s config"
     break
   fi
-  echo "Waiting for k3s config..."
+  echo "Waiting for k3s config..." || true
   sleep 5
 done
 

@@ -10,6 +10,16 @@ cleanup() {
 }
 trap cleanup EXIT ERR INT TERM
 
+# arguments
+RECREATE=false
+
+for arg in "$@"; do
+  if [ "$arg" == "--recreate" ]; then
+    RECREATE=true
+    break
+  fi
+done
+
 # the IP to MAC address mapping is defined there
 echo 'Starting nodes'
 virsh net-destroy k8s-net || true
@@ -17,22 +27,31 @@ virsh net-create k8s-net.xml
 
 sleep 3
 
-# Init throw away key
-rm ./k3s_cluster_key || true
-rm ./k3s_cluster_key.pub || true
-ssh-keygen -t ed25519 -f ./k3s_cluster_key -N ''
-
-# Compile the templates
-yq ".users[0].\"ssh-authorized-keys\"[1] = load_str(\"./k3s_cluster_key.pub\")" ./cloud-init/master/user-data.template > ./cloud-init/master/user-data
-yq ".users[0].\"ssh-authorized-keys\"[1] = load_str(\"./k3s_cluster_key.pub\") | .write_files[0].content = load_str(\"./k3s_cluster_key\")" ./cloud-init/worker/user-data.template > ./cloud-init/worker/user-data
-
-cloud-localds seed-master.iso cloud-init/master/user-data cloud-init/master/meta-data
-cloud-localds seed-worker.iso cloud-init/worker/user-data cloud-init/worker/meta-data
-
 # fetch image
 if [ ! -f "debian-12-genericcloud-amd64-20250703-2162.qcow2" ]; then
   wget https://cloud.debian.org/images/cloud/bookworm/20250703-2162/debian-12-genericcloud-amd64-20250703-2162.qcow2
 fi
+
+function init {
+  # Init throw away key
+  rm ./k3s_cluster_key || true
+  rm ./k3s_cluster_key.pub || true
+  ssh-keygen -t ed25519 -f ./k3s_cluster_key -N ''
+
+  # Compile the templates
+  yq ".users[0].\"ssh-authorized-keys\"[1] = load_str(\"./k3s_cluster_key.pub\")" \
+	  ./cloud-init/master/user-data.template > ./cloud-init/master/user-data
+  yq ".users[0].\"ssh-authorized-keys\"[1] = load_str(\"./k3s_cluster_key.pub\") | .write_files[0].content = load_str(\"./k3s_cluster_key\")" \
+	  ./cloud-init/worker/user-data.template > ./cloud-init/worker/user-data
+
+  cloud-localds seed-master.iso cloud-init/master/user-data cloud-init/master/meta-data
+  cloud-localds seed-worker.iso cloud-init/worker/user-data cloud-init/worker/meta-data
+}
+
+if [ "$RECREATE" = true ]; then
+  init
+fi
+
 
 hosts=("7c:92:6e:84:1f:50" "7c:92:6e:84:1f:51" "7c:92:6e:84:1f:52" "7c:92:6e:84:1f:53")
 for i in "${!hosts[@]}"; do
@@ -46,7 +65,9 @@ for i in "${!hosts[@]}"; do
 
     echo "Init $status node $i: ${hosts[$i]}"
 
-    cp ./debian-12-genericcloud-amd64-20250703-2162.qcow2 ./image_$i.qcow2
+    if [ "$RECREATE" = true ]; then
+      cp ./debian-12-genericcloud-amd64-20250703-2162.qcow2 ./image_$i.qcow2
+    fi
     
     qemu-system-x86_64 \
       -m 4G \

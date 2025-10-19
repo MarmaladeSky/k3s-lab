@@ -12,8 +12,16 @@ helm --kubeconfig k3s.yaml install loki grafana/loki -f loki/values.yaml -n moni
 # Install grafana
 helm --kubeconfig k3s.yaml install grafana grafana/grafana -f grafana/values.yaml -n monitoring
 
-# Access Grafana
-export POD_NAME=$(kubectl --kubeconfig k3s.yaml get pods --namespace monitoring -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=grafana" -o jsonpath="{.items[0].metadata.name}")
-kubectl --kubeconfig k3s.yaml --namespace monitoring port-forward $POD_NAME 3000
+# Access Grafana at http://localhost:3000
+kubectl --kubeconfig k3s.yaml --namespace monitoring port-forward $(kubectl --kubeconfig k3s.yaml get pods --namespace monitoring -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=grafana" -o jsonpath="{.items[0].metadata.name}") 3000
 
+# Test sending logs at http://localhost:3100
+kubectl --kubeconfig k3s.yaml --namespace monitoring port-forward $(kubectl --kubeconfig k3s.yaml get pods --namespace monitoring -l "app.kubernetes.io/name=loki,app.kubernetes.io/component=gateway" -o jsonpath="{.items[0].metadata.name}") 3100:8080
+
+# Send
+curl -H "Content-Type: application/json" -XPOST -s "http://localhost:3100/loki/api/v1/push"  \
+  --data-raw "{\"streams\": [{\"stream\": {\"job\": \"test\"}, \"values\": [[\"$(date +%s)000000000\", \"fizzbuzz\"]]}]}"
+
+# Verify
+curl -v "http://localhost:3100/loki/api/v1/query_range" --data-urlencode 'query={job="test"}' | jq .data.result
 ```

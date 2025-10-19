@@ -3,6 +3,9 @@
 Here is a simple spin up script for K3s Local Lab cluster on qemu.
 
 ```shell
+# Add the repo
+helm repo add grafana https://grafana.github.io/helm-charts
+
 # Install loki
 helm --kubeconfig k3s.yaml install loki grafana/loki -f loki/values.yaml -n monitoring --create-namespace
 

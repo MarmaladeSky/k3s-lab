@@ -16,10 +16,10 @@ runcmd:
     HOST=$(cat /sys/class/net/ens*/address | tr -d ':')
     SUFFIX=$(echo "$HOST" | tail -c 5)
     hostnamectl set-hostname "worker-${SUFFIX}"
-  - until ping -c1 10.0.0.10; do sleep 2; done
+  - until ping -c1 11.0.0.10; do sleep 2; done
   - |
     while true; do
-      TOKEN=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /root/.ssh/id_ed25519 root@10.0.0.10 'cat /var/lib/rancher/k3s/server/node-token 2>/dev/null' || true)
+      TOKEN=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /root/.ssh/id_ed25519 root@11.0.0.10 'cat /var/lib/rancher/k3s/server/node-token 2>/dev/null' || true)
       if [ -n "$TOKEN" ]; then
         echo "Got token"
         break
@@ -27,6 +27,6 @@ runcmd:
       echo "Waiting for node token..."
       sleep 5
     done
-  - curl -sfL https://get.k3s.io | K3S_URL=https://10.0.0.10:6443 K3S_TOKEN=$TOKEN sh -
+  - curl -sfL https://get.k3s.io | K3S_URL=https://11.0.0.10:6443 K3S_TOKEN=$TOKEN sh -
   - systemctl enable k3s-agent
   - systemctl start k3s-agent

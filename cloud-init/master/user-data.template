@@ -10,7 +10,7 @@ users:
 disable_root: false
 
 runcmd:
-  - curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=10.0.0.10 --tls-san=10.0.0.10" sh -
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=11.0.0.10 --tls-san=11.0.0.10" sh -
   - systemctl enable k3s
   - systemctl start k3s
   - cat /var/lib/rancher/k3s/server/node-token > /root/node-token

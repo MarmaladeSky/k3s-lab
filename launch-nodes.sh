@@ -87,7 +87,7 @@ done
 # get k3s.yaml to use with `k9s --kubeconfig k3s.yaml` or `kubectl --kubeconfig k3s.yaml ...`
 if [ ! -f "k3s.yaml" ] || [ "$RECREATE" = true ]; then
   while true; do
-    K3S_CONFIG=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./k3s_cluster_key root@10.0.0.10 'cat /etc/rancher/k3s/k3s.yaml 2>/dev/null' || true)
+    K3S_CONFIG=$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ./k3s_cluster_key root@11.0.0.10 'cat /etc/rancher/k3s/k3s.yaml 2>/dev/null' || true)
     if [ -n "$K3S_CONFIG" ]; then
       echo "Got k3s config"
       break
@@ -95,7 +95,7 @@ if [ ! -f "k3s.yaml" ] || [ "$RECREATE" = true ]; then
     echo "Waiting for k3s config..." || true
     sleep 5
   done
-  printf "%s" "$K3S_CONFIG" | sed 's/127\.0\.0\.1/10.0.0.10/g' > k3s.yaml
+  printf "%s" "$K3S_CONFIG" | sed 's/127\.0\.0\.1/11.0.0.10/g' > k3s.yaml
 fi
 
 wait

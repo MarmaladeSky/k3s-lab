@@ -1,0 +1,13 @@
+resources:
+  - grafana-dashboard.yaml
+  - grafana-datasource.yaml
+  - grafana.yaml
+
+patches:
+  - target:
+      kind: Service
+      name: grafana-instance-service
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: my-custom-grafana-service

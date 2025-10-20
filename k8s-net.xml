@@ -2,13 +2,13 @@
   <name>k8s-net</name>
   <bridge name="br0"/>
   <forward mode="nat"/>
-  <ip address="10.0.0.1" netmask="255.255.255.0">
+  <ip address="11.0.0.1" netmask="255.255.255.0">
     <dhcp>
-      <range start="10.0.0.10" end="10.0.0.128"/>
-      <host mac="7c:92:6e:84:1f:50" ip="10.0.0.10" name="node0"/>
-      <host mac="7c:92:6e:84:1f:51" ip="10.0.0.11" name="node1"/>
-      <host mac="7c:92:6e:84:1f:52" ip="10.0.0.12" name="node2"/>
-      <host mac="7c:92:6e:84:1f:53" ip="10.0.0.13" name="node3"/>
+      <range start="11.0.0.10" end="11.0.0.128"/>
+      <host mac="7c:92:6e:84:1f:50" ip="11.0.0.10" name="node0"/>
+      <host mac="7c:92:6e:84:1f:51" ip="11.0.0.11" name="node1"/>
+      <host mac="7c:92:6e:84:1f:52" ip="11.0.0.12" name="node2"/>
+      <host mac="7c:92:6e:84:1f:53" ip="11.0.0.13" name="node3"/>
     </dhcp>
   </ip>
 </network>

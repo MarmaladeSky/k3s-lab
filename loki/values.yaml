@@ -19,6 +19,12 @@ loki:
   ruler:
     enable_api: true
 
+gateway:
+  service:
+    type: LoadBalancer
+    port: 3100
+    externalTrafficPolicy: Cluster
+
 minio:
   enabled: true
 

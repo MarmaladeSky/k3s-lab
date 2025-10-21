@@ -7,6 +7,8 @@ The purpose of this repo is to provide a simple K3s spin-up script with the simp
 Required tools: `yq-go`, `qemu`, `libvirt`, `cloud-utils`, `k9s`
 
 ```shell
+# Allow the bridge for your qemu by uncommenting "allow br0" in /etc/qemu/bridge.conf
+
 # Add the repo
 helm repo add grafana https://grafana.github.io/helm-charts
 

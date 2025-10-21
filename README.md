@@ -1,6 +1,10 @@
-# Simple K3s Lab
+# Grafana at K3s Lab
 
-Here is a simple spin up script for K3s Local Lab cluster on qemu.
+This is my personal K3s Lab where I learn, research and experiment with Grafana Stack (and maybe something else) at K3s.
+
+The purpose of this repo is to provide a simple K3s spin-up script with the simplest step-by-step Grafana components deployment.
+
+Required tools: `yq-go`, `qemu`, `libvirt`, `cloud-utils`, `k9s`
 
 ```shell
 # Add the repo
